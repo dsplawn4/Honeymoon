@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/images.js": {
+      "runtime": "nodejs20.x"
+    }
+  }
+}
