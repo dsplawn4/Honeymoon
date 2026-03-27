@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Grand Tour 2027</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0C0B09; }
+@keyframes spin { to { transform:rotate(360deg); } }
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-thumb { background:rgba(212,168,75,0.3); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect } = React;
+const G="#D4A84B", GDIM="rgba(212,168,75,0.25)", BG="#0C0B09", SURF="#141210", MUTED="#7A7060", TEXT="#E8E0D0";
+
+// Each destination has 4 DISTINCT queries — different subjects, no overlap
+const destinations = [
+  {
+    id:"cape-town", leg:1, days:"Days 2–3", dates:"Sept 2–3",
+    name:"Cape Town, South Africa", type:"normal",
+    queries:[
+      "Table Mountain Cape Town flat top aerial",
+      "Bo-Kaap colorful houses Cape Town cobblestone",
+      "Franschhoek wine valley vineyard mountains South Africa",
+      "Cape Town V&A Waterfront marina boats evening"
+    ],
+    tagline:"The Mother City at spring — wildflowers, world-class wine, and Table Mountain at golden hour",
+    overview:"September is Cape Town's spring awakening. Table Mountain's fynbos blooms, the Winelands go green, and the city runs at its best energy. Two nights here — arrive, recover from the flight, one full day to explore before heading to Namibia.",
+    wildlife:[],
+    itinerary:[
+      "Sept 2: Arrive from Lima via São Paulo. Check in, V&A Waterfront walk, early night.",
+      "Sept 3: Table Mountain cable car at dawn. Bo-Kaap neighborhood. Winelands day trip — Franschhoek or Stellenbosch.",
+      "Sept 4: Fly Cape Town → Windhoek, Namibia."
+    ],
+    tip:{label:"Pro Tip",text:"Table Mountain gets capped in cloud fast — go first thing in the morning. Book the cable car online the night before."}
+  },
+  {
+    id:"sossusvlei", leg:1, days:"Days 5–7", dates:"Sept 5–7",
+    name:"Sossusvlei, Namibia", type:"normal",
+    queries:[
+      "Sossusvlei red sand dunes Namibia aerial dawn",
+      "Deadvlei white clay pan dead trees Namibia",
+      "Dune 45 Namibia sunrise climber shadow",
+      "Namib desert star trails night sky Sossusvlei"
+    ],
+    tagline:"The oldest desert on earth — dunes 300 meters tall, turning blood red at dawn",
+    overview:"Sossusvlei is in the Namib Desert, the oldest desert on earth. The dunes here are among the tallest in the world, and they turn extraordinary shades of red and orange at dawn and dusk. Deadvlei — a white clay pan surrounded by 900-year-old dead camelthorn trees against orange dunes — is one of the most photographed landscapes on the planet.",
+    wildlife:["Oryx","Springbok","Ostrich","Desert-adapted Giraffe","Brown Hyena","Bat-eared Fox"],
+    itinerary:[
+      "Sept 5: Drive Windhoek → Sossusvlei (4.5 hrs). Arrive afternoon. Check in to lodge.",
+      "Sept 6: Pre-dawn start — Dune 45 sunrise climb. Big Daddy dune. Deadvlei white clay pan. Afternoon at leisure.",
+      "Sept 7: Second dawn session. Slower pace. Drive to Swakopmund on the Atlantic coast."
+    ],
+    tip:{label:"Dawn is Everything",text:"The dunes are dramatically different colors at dawn vs midday. Set your alarm for 5am. The light lasts about 45 minutes before the red fades. It's worth every minute of lost sleep."}
+  },
+  {
+    id:"swakopmund", leg:1, days:"Day 8", dates:"Sept 8",
+    name:"Swakopmund, Namibia", type:"normal",
+    queries:[
+      "Swakopmund German colonial architecture Namibia town",
+      "Namibia Atlantic coast desert meets ocean fog",
+      "Swakopmund oysters fresh seafood Namibia restaurant",
+      "Skeleton Coast Namibia Atlantic waves desert shipwreck"
+    ],
+    tagline:"Where the Namib Desert meets the Atlantic Ocean — German colonial town, fresh oysters, and ocean fog",
+    overview:"Swakopmund is one of Africa's most unusual towns — a perfectly preserved German colonial settlement sitting where the Namib Desert meets the cold Atlantic. Colorful Germanic architecture, excellent seafood, and the eerie spectacle of desert dunes running straight into the ocean.",
+    wildlife:["Cape Fur Seal (thousands)","African Penguin","Flamingo","Pelican"],
+    itinerary:[
+      "Sept 8: Drive from Sossusvlei. Arrive midday. Explore the town, German bakeries, harbor.",
+      "Evening: Fresh Namibian oysters and seafood for dinner. Walk along the Atlantic.",
+      "Sept 9: Morning at leisure. Drive to Etosha National Park (4 hrs)."
+    ],
+    tip:{label:"The Oysters",text:"Namibian oysters are farmed in the cold, clean Walvis Bay lagoon 30km south. They're among the best in the world. Order them at The Tug restaurant on the Swakopmund waterfront."}
+  },
+  {
+    id:"etosha", leg:1, days:"Days 9–11", dates:"Sept 9–11",
+    name:"Etosha National Park, Namibia", type:"normal",
+    queries:[
+      "Etosha National Park waterhole elephant lion Namibia",
+      "black rhino Etosha Namibia waterhole night",
+      "Etosha salt pan Namibia aerial white flat",
+      "cheetah Etosha Namibia savanna hunt"
+    ],
+    tagline:"Africa's greatest waterhole safari — predators and prey converging at floodlit water in the Namibian night",
+    overview:"Etosha is built around a massive salt pan — 4,800 sq km of blinding white flat. The surrounding bush is dominated by waterholes that are the lifeblood of the park. In September's dry season, animals have no choice but to come to these points. Many lodges have floodlit waterholes you can watch from a raised platform all night — lions, elephants, rhino, and cheetah all coming to drink.",
+    wildlife:["Black Rhino","White Rhino","Lion","Leopard","Cheetah","Elephant","Giraffe","Zebra","Wildebeest","Springbok","Oryx","Kudu","African Wild Dog"],
+    itinerary:[
+      "Sept 9: Arrive Etosha afternoon. First waterhole session at sunset.",
+      "Sept 10: Full day game drives — morning and afternoon. Floodlit waterhole at night.",
+      "Sept 11: Final morning drive. Fly Windhoek → Nairobi → Kilimanjaro Airport. Arrive Moshi evening."
+    ],
+    tip:{label:"The Night Waterhole",text:"Stay at Okaukuejo or Halali camp — both have floodlit waterholes 50 meters from a viewing platform. Sit there at 10pm with a cold Windhoek beer and watch black rhino drink. It's completely free and one of the best wildlife experiences in Africa."}
+  },
+  {
+    id:"moshi-kili", leg:1, days:"Days 12–15", dates:"Sept 12–15",
+    name:"Moshi & Kilimanjaro, Tanzania", type:"normal",
+    queries:[
+      "Mount Kilimanjaro snow peak Tanzania sunrise",
+      "Materuni waterfall Kilimanjaro forest coffee plantation trek",
+      "Kilimanjaro Marangu route heather moorland giant groundsel",
+      "Moshi Tanzania Kilimanjaro view lodge pool"
+    ],
+    tagline:"Four days at the foot of Africa's highest mountain — forest treks, waterfalls, and the mountain at dawn from your bed",
+    overview:"Moshi sits at the base of Kilimanjaro with the mountain filling your entire horizon. No summit attempt — instead two days of proper trekking into the mountain's forest and heather zones, seeing the ecosystems and wildlife of the lower slopes, getting legitimately onto the mountain without the 8-day commitment.",
+    wildlife:["Black & White Colobus Monkey","Blue Monkey","White-necked Raven","Buffalo (forest zone)","Elephant (forest zone)","Leopard (rare)"],
+    itinerary:[
+      "Sept 12: Arrive Moshi from Namibia. Check into lodge with Kili views. Rest.",
+      "Sept 13: Materuni Waterfall trek — through coffee plantations and montane forest to a waterfall at 1,600m. 4-5 hours. Colobus monkeys throughout.",
+      "Sept 14: Marangu route day hike — into the heather and moorland zone, up to ~3,000m. Giant groundsel plants, glacier views in the distance, dramatic landscape.",
+      "Sept 15: Slow morning with Kili views. Spa afternoon. Drive to Arusha for Tanzania safari."
+    ],
+    tip:{label:"Lodge",text:"Kilimat Lodge or Onsea House near Moshi have direct Kilimanjaro views from the pool. Waking up to the full mountain from your bed — with coffee — is one of the great honeymoon moments on this trip."}
+  },
+  {
+    id:"tarangire", leg:1, days:"Days 16–17", dates:"Sept 16–17",
+    name:"Tarangire National Park, Tanzania", type:"normal",
+    queries:[
+      "Tarangire elephant herd dry river Tanzania baobab",
+      "baobab tree Tanzania sunset orange sky Tarangire",
+      "African wild dog pack Tanzania savanna",
+      "Tarangire Tanzania giraffe acacia tree game drive"
+    ],
+    tagline:"The Tarangire River is the only water for 100km — elephant herds of 300+ gather here in September",
+    overview:"Tarangire is criminally underrated. In September, the dry Tarangire River becomes the only water source for the entire ecosystem — drawing massive elephant herds, predators, and wildlife concentrations unlike anywhere else. Ancient baobab trees dot the landscape, leafless in the dry season, creating extraordinary silhouettes at sunset.",
+    wildlife:["Elephant Herds (50–300+)","Lion","Leopard","Cheetah","African Wild Dog","Buffalo","Wildebeest","Zebra","Giraffe","Fringe-eared Oryx","Python","Monitor Lizard","Secretary Bird"],
+    itinerary:[
+      "Sept 16: Drive Arusha → Tarangire (1.5 hrs). Afternoon game drive — elephant concentrations at the river.",
+      "Sept 17: Full day game drive. Baobab landscape, lion prides, night drive if available. Drive to Ngorongoro rim evening."
+    ],
+    tip:{label:"Elephant Crossing",text:"Position at the Tarangire River just before sunset. 200+ elephants crossing as the light turns gold with baobabs silhouetted behind them. Tell your guide — they'll know exactly where to park."}
+  },
+  {
+    id:"ngorongoro", leg:1, days:"Days 18–19", dates:"Sept 18–19",
+    name:"Ngorongoro Crater, Tanzania", type:"normal",
+    queries:[
+      "Ngorongoro Crater floor Tanzania lion pride open grass",
+      "black rhino Ngorongoro Tanzania conservation area",
+      "Ngorongoro Crater hippo pool Tanzania water",
+      "flamingo Ngorongoro soda lake Tanzania pink birds"
+    ],
+    tagline:"25,000 animals permanently resident in a 20km volcanic bowl — the only place on earth to reliably see Big 5 in one day",
+    overview:"The Ngorongoro Crater is the world's largest intact volcanic caldera. The ecosystem is entirely self-sustaining within the 600m walls — water, prey, and predators in permanent balance. It's one of the only places on earth where you can reliably see all Big 5 in a single game drive. The black rhino population of ~26 is one of the densest anywhere.",
+    wildlife:["Black Rhino ★ (26 resident)","Lion (multiple prides)","Leopard","Elephant","Cape Buffalo (2,000+)","Hippo (Hippo Pool)","Spotted Hyena","Wildebeest (7,000+)","Zebra","Lesser Flamingo","Golden Jackal","Serval","Cheetah"],
+    itinerary:[
+      "Sept 18: Drive to crater rim (2,300m). Check into rim lodge — views across the full crater. Afternoon crater floor drive.",
+      "Sept 19: Full day on the floor. Enter 7am. Lerai Forest for black rhino. Mandusi Swamp for lion prides. Hippo Pool. Exit by mandatory 6pm."
+    ],
+    tip:{label:"The Black Rhino",text:"Ngorongoro has ~26 black rhino — one of the densest populations on earth. Most active near Lerai Forest in early morning. Ask your guide to prioritize this — it's the hardest Big 5 animal to see anywhere else on this trip."}
+  },
+  {
+    id:"amboseli", leg:1, days:"Days 20–21", dates:"Sept 20–21",
+    name:"Amboseli National Park, Kenya", type:"normal",
+    queries:[
+      "Amboseli elephants Kilimanjaro snow background Kenya",
+      "Amboseli Kenya elephant herd swamp green",
+      "Amboseli Kenya sunrise Kilimanjaro pink sky elephants",
+      "Amboseli Kenya Maasai warrior traditional landscape"
+    ],
+    tagline:"The world's most iconic wildlife image — elephant herds with Kilimanjaro filling the horizon behind them",
+    overview:"Amboseli sits on the Kenyan side of the border looking directly at Kilimanjaro — and it offers the single best view of the mountain on earth, with the full snow-capped peak rising above elephant-dotted plains. This is where that iconic image comes from. Amboseli also has some of Africa's most studied elephant families — habituated, relaxed, and often within meters of your vehicle.",
+    wildlife:["Elephant (very habituated herds)","Lion","Cheetah","Giraffe","Zebra","Wildebeest","Hippo (Amboseli swamps)","Buffalo","Hyena","Jackal","Over 600 bird species"],
+    itinerary:[
+      "Sept 20: Fly Arusha → Nairobi → drive to Amboseli (3 hrs). Afternoon game drive.",
+      "Sept 21: Pre-dawn drive — Kilimanjaro at sunrise with elephants. The shot. Full morning game drive. Fly to Masai Mara via Nairobi afternoon."
+    ],
+    tip:{label:"The Dawn Shot",text:"Kilimanjaro is clearest at dawn before heat haze builds. Be on the plains by 6am. The mountain usually clouds over by 10am. Your guide will position you with the elephant families in the foreground — this is one of the great wildlife photography moments on earth."}
+  },
+  {
+    id:"masai-mara", leg:1, days:"Days 21–25", dates:"Sept 21–25",
+    name:"Masai Mara, Kenya", type:"normal",
+    queries:[
+      "wildebeest river crossing Mara River crocodile Kenya",
+      "Masai Mara lion pride golden grass Kenya safari",
+      "cheetah cubs Masai Mara Kenya conservancy",
+      "Masai Mara Kenya hot air balloon safari sunrise"
+    ],
+    tagline:"1.5 million wildebeest. River crossings daily. September is the single best month on earth to watch wildlife.",
+    overview:"The Great Migration peaks in September. 1.5 million wildebeest and 200,000 zebra are in the Mara, having crossed from Tanzania. The Mara River crossings happen almost daily — crocodiles, chaos, and survival in real time. Stay in a private conservancy for night drives, off-road access, and no minibus congestion at kills.",
+    wildlife:["Wildebeest (1.5M+)","Zebra (200,000+)","Lion","Leopard","Cheetah","African Wild Dog","Nile Crocodile","Hippo","Elephant","Cape Buffalo","Spotted Hyena","Topi","Eland","Giraffe","Impala","Bat-eared Fox"],
+    itinerary:[
+      "Sept 21: Arrive from Amboseli. Afternoon game drive — migration herds everywhere.",
+      "Sept 22: Full day. Dawn drive for predator activity. River crossing positioning.",
+      "Sept 23: Full day. Private conservancy — night drive available. Off-road access.",
+      "Sept 24: Full day. Best chance at a Mara River crossing. Sundowner on the plains.",
+      "Sept 25: Dawn drive. Fly Nairobi → Johannesburg → Cairo. Arrive evening."
+    ],
+    tip:{label:"Private Conservancy",text:"Stay in Mara Naboisho, Mara North, or Olare Motorogi — not the main reserve. Night drives, off-road driving, no minibus crowds at kills. Encounter Mara Camp or Kicheche Mara are the right tier. Book 6+ months out — September fills completely."}
+  },
+
+  // LEG 2: EGYPT + PETRA
+  {
+    id:"cairo", leg:2, days:"Days 26–28", dates:"Sept 26–28",
+    name:"Cairo, Egypt", type:"normal",
+    queries:[
+      "Pyramids Giza Egypt desert camel sunrise orange sky",
+      "Great Sphinx Giza Egypt ancient limestone close",
+      "Grand Egyptian Museum Cairo Tutankhamun gold mask artifact",
+      "Khan el-Khalili bazaar Islamic Cairo lanterns spice market"
+    ],
+    tagline:"The Pyramids are larger and stranger in person than any photograph conveys. Nothing prepares you.",
+    overview:"Cairo hits differently. The Pyramids of Giza defy expectation in scale and strangeness — built 4,500 years ago with precision that still baffles engineers. The Grand Egyptian Museum (opened 2023) is the world's largest archaeological museum, home to the complete Tutankhamun collection for the first time in history. October: mid-20s°C, completely dry.",
+    wildlife:[],
+    itinerary:[
+      "Sept 26: Arrive from Masai Mara via JNB. Late arrival. Check in. Rest.",
+      "Sept 27: Dawn at the Pyramids before buses arrive. Great Sphinx. Grand Egyptian Museum — full afternoon.",
+      "Sept 28: Islamic Cairo — Al-Azhar Mosque, Citadel of Saladin, Khan el-Khalili bazaar. Rooftop dinner. Fly to Luxor morning Sept 29."
+    ],
+    tip:{label:"Egyptologist Guide",text:"Hire a licensed Egyptologist for Cairo and Luxor. Without one, Karnak is just big stones. With one, it's 3,000 years of living history. The difference is extraordinary."}
+  },
+  {
+    id:"luxor", leg:2, days:"Day 29", dates:"Sept 29",
+    name:"Luxor — Valley of the Kings", type:"normal",
+    queries:[
+      "Karnak Temple Luxor Egypt avenue sphinxes golden hour",
+      "Valley of the Kings Luxor Egypt tomb entrance carved rock",
+      "hot air balloon Luxor Egypt sunrise Valley Kings aerial",
+      "Hatshepsut mortuary temple Luxor Egypt cliff face"
+    ],
+    tagline:"Ancient Thebes — the greatest concentration of ancient monuments on earth",
+    overview:"Luxor sits atop ancient Thebes, capital of Egypt during its most powerful dynasties. Karnak is the largest religious complex ever built. The Valley of the Kings holds the tombs of Ramesses II, Tutankhamun, and Seti I. The Avenue of Sphinxes was fully excavated in 2021 for the first time in 3,000 years.",
+    wildlife:[],
+    itinerary:[
+      "Morning: Fly Cairo → Luxor (1 hr). Check in.",
+      "Afternoon: Valley of the Kings — tombs of Ramesses II, Tutankhamun (buy add-on ticket), Seti I.",
+      "Late afternoon: Karnak Temple — Avenue of Sphinxes at golden hour.",
+      "Evening: Board Nile cruise. Luxor Temple illuminated at night visible from the dock."
+    ],
+    tip:{label:"Hot Air Balloon",text:"Pre-dawn launch over the Valley of the Kings at sunrise — one of the great travel experiences anywhere. Book through your hotel the evening before. ~$100–150. Worth every cent."}
+  },
+  {
+    id:"nile-cruise", leg:2, days:"Days 30–32", dates:"Sept 30–Oct 2",
+    name:"Nile Cruise — Luxor to Aswan", type:"normal",
+    queries:[
+      "felucca sailboat Nile River Egypt sunset orange water",
+      "Temple of Edfu Egypt Horus pylon entrance ancient",
+      "Kom Ombo Temple Egypt Nile riverside dual temple",
+      "Philae Temple Aswan Egypt island water blue sky"
+    ],
+    tagline:"Drifting south through ancient Egypt — stopping at temples the tour buses never reach",
+    overview:"On a small boutique boat you sail south between temple stops, eat on deck as the Nile rolls past, and arrive in Aswan three days later. Stops at Esna, Edfu (best preserved temple in Egypt), Kom Ombo (twin temples on the riverbank), and Aswan's Philae Temple. October: bone dry, extraordinary sunsets over the water.",
+    wildlife:[],
+    itinerary:[
+      "Sept 30: Board in Luxor. Sail to Esna — Temple of Khnum with extraordinary preserved ceiling astronomy.",
+      "Oct 1: Esna → Edfu (Temple of Horus — best preserved temple in all Egypt) → Kom Ombo (twin temples of Sobek and Horus). Sundowner on deck.",
+      "Oct 2: Arrive Aswan. Philae Temple by motorboat. Nubian village by felucca. Sunset over the Nile."
+    ],
+    tip:{label:"Boat Size",text:"Boutique boats with 8–16 cabins only — Dahabiya-style or small cruisers like MS Hamees. Large ships travel in convoys and anchor together. Completely different experience."}
+  },
+  {
+    id:"abu-simbel", leg:2, days:"Day 33", dates:"Oct 3",
+    name:"★ Abu Simbel", type:"summit",
+    queries:[
+      "Abu Simbel temple Ramesses II four giant statues facade Egypt",
+      "Abu Simbel interior hall carved walls battle reliefs Egypt",
+      "Abu Simbel Nefertari small temple facade statues Egypt",
+      "Lake Nasser Egypt vast water desert Abu Simbel reflection"
+    ],
+    tagline:"Carved into a cliff 3,200 years ago — then cut into 1,036 blocks and moved 65 meters uphill to save it from a rising dam",
+    overview:"The best single site in Egypt outside the Pyramids. Four 20-meter statues of Ramesses II flank the entrance. Interior halls extend 60 meters into the mountain. In the 1960s UNESCO led the most ambitious archaeological rescue in history — cutting the entire temple into blocks and reassembling it above the new Aswan Dam's waterline.",
+    wildlife:[],
+    itinerary:[
+      "Oct 3: Dawn flight from Aswan (45 min) — arrive before tour groups.",
+      "Great Temple: Four colossal Ramesses II statues. 60m of battle reliefs inside. Inner sanctuary.",
+      "Small Temple of Nefertari: One of only two temples in Egypt built for a queen.",
+      "Allow 3 hours. Fly back to Aswan. Depart Aswan → Cairo → Amman, Jordan."
+    ],
+    tip:{label:"Don't Skip This",text:"Most travelers skip Abu Simbel because it feels far. It is not far enough to justify skipping. Nothing in Egypt — not the Pyramids, not Karnak — has the same combined impact of scale, isolation, and story."}
+  },
+  {
+    id:"petra", leg:2, days:"Days 35–36", dates:"Oct 5–6",
+    name:"Petra, Jordan", type:"normal",
+    queries:[
+      "Petra Treasury Al-Khazneh Jordan rose red sandstone facade",
+      "Petra Siq narrow canyon gorge Jordan sandstone walls",
+      "Petra Monastery Ad-Deir Jordan carved rock mountain top",
+      "Petra by Night Jordan candles Siq candlelight ceremony"
+    ],
+    tagline:"A city of 30,000 carved entirely from rose-red rock — hidden from the Western world for 500 years",
+    overview:"The Nabataean Arab kingdom carved an entire capital city directly into sandstone cliffs, peaking around 100 BC. The 1.2km walk through the Siq canyon — barely wide enough for two horses — ends with the sudden reveal of the Treasury. One of the great dramatic moments in all of travel. And that's just the entrance.",
+    wildlife:[],
+    itinerary:[
+      "Oct 5: Arrive from Amman (3hr drive). Afternoon entry — walk the Siq, Treasury, Street of Facades, Royal Tombs. Petra by Night if Tue/Wed/Thu.",
+      "Oct 6: The Monastery (Ad-Deir) — 850 carved steps, larger than the Treasury, almost no crowds. High Place of Sacrifice. Little Petra nearby."
+    ],
+    tip:{label:"The Monastery Is Better",text:"Most visitors see the Treasury and leave. The Monastery is 850 steps behind the main city — larger, more isolated, and you'll have it nearly to yourself. Day 2 should be entirely dedicated to this hike."}
+  },
+
+  // LEG 3: VIETNAM
+  {
+    id:"hanoi", leg:3, days:"Days 40–42", dates:"Oct 10–12",
+    name:"Hanoi", type:"normal",
+    queries:[
+      "Hoan Kiem Lake Hanoi Vietnam turtle tower autumn reflection",
+      "Hanoi Old Quarter street vendors motorbikes narrow",
+      "Vietnamese pho soup bowl chopsticks Hanoi street food",
+      "Hanoi egg coffee cafe Vietnam cup whipped"
+    ],
+    tagline:"1,000 years as a capital. The world's best street food. October is when the city looks its most beautiful.",
+    overview:"Hanoi in October is golden — crisp autumn air, far fewer tourists than summer, and the Old Quarter at its most alive. The food here is the best in Vietnam by a significant margin. Three nights gives you time to breathe rather than rush.",
+    wildlife:[],
+    itinerary:[
+      "Oct 10: Arrive from Amman via Doha (Qatar Airways). Morning arrival. Slow check-in. Old Quarter wander at dusk.",
+      "Oct 11: Hoan Kiem Lake at dawn. Temple of Literature. Bun Cha lunch. Ho Chi Minh Mausoleum area. Egg coffee at Cafe Giang.",
+      "Oct 12: Street food tour morning. French Quarter architecture walk. Board overnight Livitrans train to Sapa evening."
+    ],
+    tip:{label:"Food Non-Negotiables",text:"Pho Gia Truyen (49 Bat Dan, open 6am — queue by 7). Bun Cha Huong Lien (Obama and Bourdain ate here). Egg coffee at Cafe Giang — invented 1946, nowhere else does it like this. Banh Mi 25 in the Old Quarter."}
+  },
+  {
+    id:"sapa", leg:3, days:"Days 43–45", dates:"Oct 13–15",
+    name:"Sapa — Northern Highlands", type:"normal",
+    queries:[
+      "Sapa Vietnam rice terraces golden yellow harvest October",
+      "Sapa Vietnam Hmong woman traditional dress rice terrace",
+      "Muong Hoa Valley Sapa Vietnam green terraces mist morning",
+      "Fansipan mountain peak Vietnam cable car above clouds"
+    ],
+    tagline:"October is the single best time — the rice terraces turn gold as the paddies ripen for harvest",
+    overview:"Sapa sits at 1,600m in Vietnam's far northwest, looking into China across a valley that drops nearly 1,000 meters. In October the harvest begins — the terraces turn from deep green to gold and amber, and the Hmong and Red Dao minority communities work the hillsides in traditional dress. Stay at a good lodge, take gentle valley walks, let the pace decompress.",
+    wildlife:[],
+    itinerary:[
+      "Oct 12 evening: Board Livitrans overnight train Hanoi → Lao Cai (private 2-berth soft sleeper cabin).",
+      "Oct 13: Arrive Lao Cai 6am. Transfer to Sapa. Check into Topas Ecolodge or Silk Path Grand. Slow afternoon with golden valley views.",
+      "Oct 14: Guided valley walk — Cat Cat Hmong village, Muong Hoa Valley terraces. Long lunch. Long dinner.",
+      "Oct 15: Optional Fansipan cable car (3,143m — highest peak in Indochina). Or just slow morning. Overnight train back to Hanoi."
+    ],
+    tip:{label:"The Train",text:"Book a private 2-berth Livitrans soft sleeper. You fall asleep in Hanoi's heat and wake up watching terraced mountains appear through mist. Book at livitrans.com — it sells out weeks ahead in October."}
+  },
+  {
+    id:"halong", leg:3, days:"Days 47–48", dates:"Oct 17–18",
+    name:"Halong Bay — 2-Night Cruise", type:"normal",
+    queries:[
+      "Halong Bay Vietnam limestone karst islands emerald green water",
+      "Halong Bay junk boat sailing Vietnam karst sunset orange",
+      "Halong Bay kayaking cave dark water Vietnam limestone arch",
+      "Halong Bay floating fishing village Vietnam traditional boat"
+    ],
+    tagline:"1,600 limestone islands rising vertically from emerald water — nothing else on earth looks like this",
+    overview:"On a small boat you sail deep into the karsts, anchor where no large vessel can reach, kayak through cave systems, visit floating fishing villages that have existed on the water for generations, and eat the best fresh seafood of your life on deck as the karsts glow orange at sunset. Two nights is the minimum to get beyond the day-tripper zones.",
+    wildlife:[],
+    itinerary:[
+      "Oct 16: Return overnight train Sapa → Hanoi. Transfer directly to Ha Long port (3.5hrs). Board 2pm.",
+      "Oct 17: Sail deep into the bay. Kayak Luon Cave. Floating fishing village. Sunset cocktails on sundeck. Fresh crab and prawn dinner on deck.",
+      "Oct 18: Dawn tai chi on the sundeck. Morning kayaking. Titov Island beach swim. Return to port 3pm. Fly Hanoi → Ho Chi Minh City."
+    ],
+    tip:{label:"Boat",text:"Indochina Junk, Paradise Elegance, or Bhaya Classic — all under 20 cabins, all sail to quieter areas of the bay. The difference between these and large party boats is enormous — different anchorages, different experience entirely."}
+  },
+  {
+    id:"hcmc", leg:3, days:"Days 49–50", dates:"Oct 19–20",
+    name:"Ho Chi Minh City", type:"normal",
+    queries:[
+      "Ho Chi Minh City Saigon rooftop skyline night lights Vietnam",
+      "War Remnants Museum Ho Chi Minh City exhibits Vietnam history",
+      "Saigon street food banh mi Vietnam vendor cart",
+      "Cu Chi tunnels Vietnam underground narrow entrance"
+    ],
+    tagline:"10 million people. 8 million motorbikes. The most kinetic city in Southeast Asia.",
+    overview:"HCMC runs at a register unlike anywhere else on this trip. Two days of excellent food, honest history at the War Remnants Museum, and city energy before the Mekong and Phu Quoc is exactly the right pace.",
+    wildlife:[],
+    itinerary:[
+      "Oct 19: War Remnants Museum (powerful — budget 3 hours). Reunification Palace. District 1 explore. Chill Skybar rooftop at sunset.",
+      "Oct 20: Banh Mi Huynh Hoa for lunch. Cu Chi Tunnels half-day (30km out — extraordinary). Thao Dien dinner. Fly to Phu Quoc evening."
+    ],
+    tip:{label:"Food",text:"Banh Mi Huynh Hoa (District 1, widely considered Vietnam's best). Com Tam broken rice with grilled pork — the definitive HCMC dish. Pho Quynh for late night (open until 2am)."}
+  },
+  {
+    id:"mekong", leg:3, days:"Days 51–52", dates:"Oct 21–22",
+    name:"Mekong Delta", type:"normal",
+    queries:[
+      "Cai Rang floating market Vietnam dawn boat produce",
+      "Mekong Delta narrow canal Vietnam sampan boat green",
+      "Tra Su cajuput flooded forest Vietnam rowboat heron birds",
+      "Mekong Delta Vietnam water hyacinth purple flower boat"
+    ],
+    tagline:"The rice bowl of Asia — a labyrinth of waterways where life happens entirely on the river",
+    overview:"Flat, green, and entirely organized around water. Cai Rang floating market at dawn, sampan boats threading narrow canals lined with water hyacinth, Tra Su cajuput flooded forest by rowboat. October is floating season — the Delta is lush and high with water.",
+    wildlife:[],
+    itinerary:[
+      "Oct 21: Depart HCMC early. Cai Rang floating market at dawn — arrive 6am for peak activity. Slow sampan through narrow canals. Overnight in Can Tho.",
+      "Oct 22: Morning canal exploration. Tra Su cajuput forest by rowboat — flooded forest, thousands of herons and egrets. Drive back HCMC. Fly to Phu Quoc evening."
+    ],
+    tip:{label:"Tra Su Forest",text:"Most visitors skip Tra Su. A flooded cajuput forest explored by silent wooden rowboat — dense with herons and egrets, the water surface covered in purple hyacinth. October is peak flood depth. Hire a local rower, not a motorboat."}
+  },
+  {
+    id:"phu-quoc", leg:3, days:"Days 53–63", dates:"Oct 23–Nov 2",
+    name:"Phu Quoc Island — 10 Nights", type:"normal",
+    queries:[
+      "Phu Quoc island Vietnam white sand beach turquoise water",
+      "Phu Quoc Vietnam west coast sunset orange sky silhouette",
+      "An Thoi archipelago Phu Quoc snorkeling coral reef Vietnam",
+      "Phu Quoc luxury resort infinity pool Vietnam tropical"
+    ],
+    tagline:"10 nights. Nice resort. Nothing on the agenda. You have earned every single one.",
+    overview:"Vietnam's largest island — 574 sq km of national park and white sand. Early November is the sweet spot: dry season arriving, water clearing after the rainy season, not yet at December peak crowds. West coast for sunsets over the Gulf of Thailand. Seafood every night. Sleep well.",
+    wildlife:[],
+    itinerary:[
+      "Oct 23: Arrive. Check in. Beach. Done.",
+      "Day 3–4: An Thoi Archipelago snorkel day trip — 15 smaller islands, excellent coral and November visibility.",
+      "Day 5–6: Scooter north to Bai Dai beach — long, undeveloped, nearly empty.",
+      "Day 7: Duong Dong night market — fresh seafood BBQ on the street.",
+      "All other days: Pool. Book. Long lunch. Sunset cocktail. Sleep properly."
+    ],
+    tip:{label:"Where to Stay",text:"JW Marriott Phu Quoc (best pools on the island, west coast sunsets), Fusion Resort (all-inclusive spa, adults-focused), or La Veranda (boutique, 40 rooms, Ong Lang Beach). All on the west coast — essential for sunsets."}
+  }
+];
+
+const legInfo = {
+  1:{label:"Leg 01 of 03",badge:"Sept 1 – Sept 25 · 25 Days",title:"Africa",em:"Wild",
+    desc:"Cape Town in spring, Namibia's red dunes and Etosha, four days at the base of Kilimanjaro, Tanzania's elephant corridors and the Ngorongoro Crater, elephants against Kilimanjaro in Amboseli, then the Great Migration in the Masai Mara. September is peak season for every single stop."},
+  2:{label:"Leg 02 of 03",badge:"Sept 26 – Oct 8 · 13 Days",title:"Egypt",em:"& Petra",
+    desc:"The Pyramids of Giza, a Nile cruise past temple complexes that predate Rome by a thousand years, Abu Simbel relocated block by block to save it from a dam, then Petra — carved entirely from rose-red rock and lost for 500 years."},
+  3:{label:"Leg 03 of 03",badge:"Oct 9 – Nov 10 · 33 Days",title:"Vietnam",em:"Slow",
+    desc:"The honeymoon decompression leg. Rice terraces turning gold in the highlands, two nights drifting through limestone karst on a small boat, Vietnamese street food as a daily religion, then 10 full nights on a beach island with nothing on the agenda."}
+};
+
+const flights = [
+  {from:"LIM",fromCity:"Lima",to:"CPT",toCity:"Cape Town",date:"Sept 1",note:"Via GRU (São Paulo) · LATAM"},
+  {from:"CPT",fromCity:"Cape Town",to:"WDH",toCity:"Windhoek, Namibia",date:"Sept 4",note:"Direct · Air Namibia"},
+  {from:"WDH",fromCity:"Windhoek",to:"JRO",toCity:"Kilimanjaro",date:"Sept 11",note:"Via NBO · Kenya Airways"},
+  {from:"ARK",fromCity:"Arusha",to:"NBO",toCity:"Nairobi",date:"Sept 20",note:"Charter or road to Amboseli"},
+  {from:"NBO",fromCity:"Nairobi",to:"AAA",toCity:"Masai Mara",date:"Sept 21",note:"Charter flight · 45 min"},
+  {from:"NBO",fromCity:"Nairobi",to:"CAI",toCity:"Cairo",date:"Sept 25",note:"Via JNB · Ethiopian Airways"},
+  {from:"CAI",fromCity:"Cairo",to:"LXR",toCity:"Luxor",date:"Sept 29",note:"EgyptAir · 1 hr"},
+  {from:"ASW",fromCity:"Aswan",to:"AMM",toCity:"Amman",date:"Oct 3",note:"Via CAI · EgyptAir"},
+  {from:"AMM",fromCity:"Amman",to:"HAN",toCity:"Hanoi",date:"Oct 9",note:"Qatar Airways via DOH"},
+  {from:"HAN",fromCity:"Hanoi",to:"SGN",toCity:"Ho Chi Minh City",date:"Oct 18",note:"VietJet · 2 hrs"},
+  {from:"SGN",fromCity:"Ho Chi Minh City",to:"PQC",toCity:"Phu Quoc",date:"Oct 22",note:"VietJet · 45 min"},
+  {from:"PQC",fromCity:"Phu Quoc",to:"LIM",toCity:"Lima",date:"Nov 3",note:"Qatar Airways via DOH → GRU → LIM"}
+];
+
+// Fetch one image per query, all different
+function ImageGrid({ queries }) {
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        // Fetch each query with a page offset to ensure variety
+        const results = await Promise.all(
+          queries.map((q, i) =>
+            fetch(`/api/images?query=${encodeURIComponent(q)}&page=${i + 1}`)
+              .then(r => r.json())
+              .then(d => {
+                const photos = d.photos || [];
+                // Pick a different photo for each query to avoid duplicates
+                return photos[i % photos.length] || photos[0] || null;
+              })
+              .catch(() => null)
+          )
+        );
+        if (!cancelled) setImages(results.filter(Boolean));
+      } catch(e) {}
+      if (!cancelled) setLoading(false);
+    };
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
+  if (loading) return (
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:3,background:"#000"}}>
+      {[0,1,2,3].map(i=>(
+        <div key={i} style={{aspectRatio:"4/3",background:"#1a1714",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div style={{width:24,height:24,border:`2px solid ${G}`,borderTopColor:"transparent",borderRadius:"50%",animation:"spin 0.9s linear infinite"}}/>
+        </div>
+      ))}
+    </div>
+  );
+
+  return (
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:3,background:"#000"}}>
+      {images.slice(0,4).map((img,i)=>(
+        <div key={i} style={{position:"relative",overflow:"hidden",background:"#1a1714"}}>
+          <img src={img.url} alt={img.caption}
+            style={{width:"100%",aspectRatio:"4/3",objectFit:"cover",display:"block"}}
+            onError={e=>{e.target.style.display="none"}}/>
+          <div style={{position:"absolute",bottom:0,left:0,right:0,
+            background:"linear-gradient(transparent,rgba(0,0,0,0.7))",
+            padding:"20px 8px 6px",fontSize:9,color:"rgba(255,255,255,0.85)",letterSpacing:1}}>
+            {img.caption}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DestCard({ dest }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{border:`1px solid ${open?"rgba(212,168,75,0.4)":"rgba(255,255,255,0.07)"}`,marginBottom:3,transition:"border-color 0.3s"}}>
+      <div onClick={()=>setOpen(!open)}
+        style={{display:"grid",gridTemplateColumns:"70px 1fr 32px",alignItems:"center",
+          gap:12,padding:"18px 20px",cursor:"pointer",
+          background:open?"rgba(212,168,75,0.07)":SURF,userSelect:"none"}}>
+        <div>
+          <div style={{fontSize:9,letterSpacing:2,color:MUTED,marginBottom:3}}>{dest.days}</div>
+          <div style={{fontSize:9,letterSpacing:2,color:G}}>{dest.dates}</div>
+        </div>
+        <div style={{fontFamily:"'Playfair Display',Georgia,serif",
+          fontSize:dest.type==="summit"?15:17,
+          fontWeight:dest.type==="summit"?700:400,
+          color:dest.type==="summit"?G:TEXT,lineHeight:1.3}}>{dest.name}</div>
+        <div style={{width:28,height:28,border:`1px solid ${open?GDIM:"rgba(255,255,255,0.1)"}`,
+          display:"flex",alignItems:"center",justifyContent:"center",
+          color:open?G:MUTED,fontSize:20,transform:open?"rotate(45deg)":"none",
+          transition:"all 0.25s",flexShrink:0}}>+</div>
+      </div>
+      {open && (
+        <div style={{borderTop:"1px solid rgba(255,255,255,0.07)"}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr"}}>
+            <ImageGrid queries={dest.queries}/>
+            <div style={{padding:"24px 20px",background:SURF,overflowY:"auto",maxHeight:520}}>
+              <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:14,
+                fontStyle:"italic",color:G,marginBottom:12,lineHeight:1.45}}>
+                "{dest.tagline}"
+              </div>
+              <p style={{fontSize:12,lineHeight:1.8,color:MUTED,marginBottom:18}}>{dest.overview}</p>
+              <div style={{marginBottom:16}}>
+                <div style={{fontSize:8,letterSpacing:4,textTransform:"uppercase",color:G,marginBottom:8}}>Itinerary</div>
+                {dest.itinerary.map((item,i)=>(
+                  <div key={i} style={{fontSize:11,lineHeight:1.6,color:TEXT,padding:"4px 0",
+                    borderBottom:"1px solid rgba(255,255,255,0.04)",display:"flex",gap:8}}>
+                    <span style={{color:G,flexShrink:0}}>–</span>{item}
+                  </div>
+                ))}
+              </div>
+              {dest.wildlife.length>0 && (
+                <div style={{marginBottom:16}}>
+                  <div style={{fontSize:8,letterSpacing:4,textTransform:"uppercase",color:G,marginBottom:8}}>Wildlife</div>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                    {dest.wildlife.map((w,i)=>(
+                      <span key={i} style={{padding:"3px 8px",border:`1px solid ${GDIM}`,
+                        fontSize:10,color:G,background:"rgba(212,168,75,0.05)"}}>{w}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div style={{background:"rgba(212,168,75,0.05)",borderLeft:`2px solid ${G}`,padding:"12px 14px"}}>
+                <div style={{fontSize:8,letterSpacing:4,textTransform:"uppercase",color:G,marginBottom:5}}>{dest.tip.label}</div>
+                <div style={{fontSize:11,lineHeight:1.7,color:MUTED}}>{dest.tip.text}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function App() {
+  const [tab, setTab] = useState(1);
+  const tabs=[["01 — Africa",1],["02 — Egypt & Petra",2],["03 — Vietnam",3],["Flights",4]];
+  const dividers={
+    1:"End of Leg 01 · Fly Nairobi → Cairo",
+    2:"End of Leg 02 · Fly Amman → Doha → Hanoi",
+    3:"End of Leg 03 · Fly Phu Quoc → Doha → Lima"
+  };
+
+  return (
+    <div style={{background:BG,minHeight:"100vh",color:TEXT,fontFamily:"'Jost',sans-serif",fontWeight:300}}>
+
+      {/* HERO */}
+      <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"flex-end",
+        padding:"0 0 64px",
+        background:`linear-gradient(to bottom,rgba(12,11,9,0.2) 0%,rgba(12,11,9,0.65) 55%,${BG} 100%),
+          url('https://images.pexels.com/photos/631317/pexels-photo-631317.jpeg?auto=compress&cs=tinysrgb&w=1600') center/cover no-repeat`}}>
+        <div style={{padding:"0 40px"}}>
+          <div style={{fontSize:10,letterSpacing:6,textTransform:"uppercase",color:G,marginBottom:16}}>
+            September 1 — November 10, 2027
+          </div>
+          <h1 style={{fontFamily:"'Playfair Display',Georgia,serif",
+            fontSize:"clamp(56px,11vw,120px)",fontWeight:900,lineHeight:0.88,
+            letterSpacing:-2,marginBottom:22}}>
+            The <em style={{fontStyle:"italic",color:G,fontWeight:400}}>Grand</em><br/>Tour
+          </h1>
+          <div style={{fontSize:11,letterSpacing:3,color:MUTED,textTransform:"uppercase",marginBottom:40}}>
+            Lima · Africa · Egypt · Petra · Vietnam
+          </div>
+          <div style={{display:"flex",gap:40}}>
+            {[["71","Days"],["3","Legs"],["16","Stops"],["5","Continents"]].map(([n,l])=>(
+              <div key={l}>
+                <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:38,fontWeight:700,color:G,lineHeight:1}}>{n}</div>
+                <div style={{fontSize:9,letterSpacing:3,textTransform:"uppercase",color:MUTED,marginTop:3}}>{l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* NAV */}
+      <div style={{position:"sticky",top:0,zIndex:100,background:"rgba(12,11,9,0.97)",
+        backdropFilter:"blur(20px)",borderBottom:"1px solid rgba(255,255,255,0.07)",
+        display:"flex",overflowX:"auto"}}>
+        {tabs.map(([label,t])=>(
+          <button key={t} onClick={()=>setTab(t)} style={{
+            padding:"18px 20px",fontSize:10,letterSpacing:4,textTransform:"uppercase",
+            color:tab===t?G:MUTED,
+            borderBottom:tab===t?`2px solid ${G}`:"2px solid transparent",
+            background:"none",border:"none",
+            borderBottom:tab===t?`2px solid ${G}`:"2px solid transparent",
+            cursor:"pointer",whiteSpace:"nowrap",fontFamily:"'Jost',sans-serif",fontWeight:400
+          }}>{label}</button>
+        ))}
+      </div>
+
+      {/* CONTENT */}
+      <div style={{maxWidth:1100,margin:"0 auto",padding:"0 32px 80px"}}>
+
+        {tab<=3&&(()=>{
+          const info=legInfo[tab];
+          const dests=destinations.filter(d=>d.leg===tab);
+          return(
+            <div style={{paddingTop:56}}>
+              <div style={{marginBottom:44}}>
+                <div style={{fontSize:9,letterSpacing:5,textTransform:"uppercase",color:G,marginBottom:12}}>{info.label}</div>
+                <div style={{display:"inline-block",background:"rgba(212,168,75,0.15)",
+                  border:`1px solid ${GDIM}`,padding:"4px 14px",fontSize:9,
+                  letterSpacing:3,textTransform:"uppercase",color:G,marginBottom:16}}>{info.badge}</div>
+                <h2 style={{fontFamily:"'Playfair Display',Georgia,serif",
+                  fontSize:"clamp(34px,6vw,62px)",fontWeight:700,lineHeight:1,marginBottom:16}}>
+                  {info.title} <em style={{fontStyle:"italic",color:G,fontWeight:400}}>{info.em}</em>
+                </h2>
+                <p style={{fontSize:15,lineHeight:1.8,color:MUTED,maxWidth:560}}>{info.desc}</p>
+              </div>
+              {dests.map(d=><DestCard key={d.id} dest={d}/>)}
+              <div style={{display:"flex",alignItems:"center",gap:16,margin:"48px 0 0",opacity:0.5}}>
+                <div style={{flex:1,height:1,background:`linear-gradient(to right,transparent,${GDIM})`}}/>
+                <div style={{fontSize:8,letterSpacing:4,textTransform:"uppercase",color:G,whiteSpace:"nowrap"}}>{dividers[tab]}</div>
+                <div style={{flex:1,height:1,background:`linear-gradient(to left,transparent,${GDIM})`}}/>
+              </div>
+            </div>
+          );
+        })()}
+
+        {tab===4&&(
+          <div style={{paddingTop:56}}>
+            <h2 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:40,fontWeight:700,marginBottom:36}}>
+              Key <em style={{fontStyle:"italic",color:G,fontWeight:400}}>Flights</em>
+            </h2>
+            {flights.map((f,i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"80px 1fr 32px 1fr 160px",
+                alignItems:"center",gap:12,padding:"14px 20px",
+                background:SURF,border:"1px solid rgba(255,255,255,0.07)",marginBottom:2}}>
+                <div>
+                  <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:20,fontWeight:700,color:G}}>{f.from}</div>
+                  <div style={{fontSize:10,color:MUTED,marginTop:1}}>{f.fromCity}</div>
+                </div>
+                <div/>
+                <div style={{textAlign:"center",color:MUTED,fontSize:14}}>→</div>
+                <div>
+                  <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:20,fontWeight:700,color:G}}>{f.to}</div>
+                  <div style={{fontSize:10,color:MUTED,marginTop:1}}>{f.toCity}</div>
+                </div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{fontSize:10,letterSpacing:2,color:TEXT}}>{f.date}</div>
+                  <div style={{fontSize:10,color:MUTED,marginTop:2}}>{f.note}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
